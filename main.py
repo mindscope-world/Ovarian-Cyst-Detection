@@ -1,6 +1,8 @@
+import os
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+import uvicorn
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import numpy as np
@@ -157,3 +159,6 @@ async def predict_management(data: OvarianCystData):
         raise HTTPException(status_code=400, detail=f"Prediction failed: {e}")
 
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))  # Default to 8000 if not set
+    uvicorn.run(app, host="0.0.0.0", port=port)
