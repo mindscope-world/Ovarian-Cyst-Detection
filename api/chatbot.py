@@ -26,7 +26,7 @@ SAMPLE_QUESTIONS = [
 
     Ask questions in natural language about the patient dataset.
     
-    **Sample Questions:**
+    Sample Questions:
         * How many patients are from the Nairobi region?,
         * What is the average age of post-menopausal patients?,
         * What is the recommended management for patient OC-1020?,
