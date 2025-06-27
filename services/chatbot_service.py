@@ -1,5 +1,3 @@
-# services/chatbot_service.py
-
 # File: services/chatbot_service.py
 
 import pandas as pd
@@ -8,53 +6,63 @@ from core.config import settings
 
 class ChatbotService:
     def __init__(self, data_path: str):
-        self.model = None
+        # --- THE FIX STARTS HERE ---
         self.df = None
-        self.data_context = "Data not available."
-        
-        # 1. Load the dataset
+        self.model = None
+        self.data_context = ""
+        self.error_message = None
+        # 1. Initialize is_configured to False
+        self.is_configured = False
+
+        # Load the dataset
         try:
             self.df = pd.read_csv(data_path)
-            # Convert the entire dataframe to a string to be used as context
             self.data_context = self.df.to_string()
             print("Chatbot data context loaded successfully.")
         except FileNotFoundError:
-            print(f"ERROR: Chatbot data file not found at {data_path}. The chatbot will not work.")
-            return # Stop initialization if data is not found
+            self.error_message = f"Data file not found at path: '{data_path}'."
+            print(f"ERROR: {self.error_message}")
+            return # Stop initialization
 
-        # 2. Configure the Gemini model
-        if settings.GOOGLE_API_KEY and settings.GOOGLE_API_KEY != "YOUR_GOOGLE_API_KEY_NOT_SET":
-            try:
-                genai.configure(api_key=settings.GOOGLE_API_KEY)
-                self.model = genai.GenerativeModel('gemini-2.5-flash')
-                print("Gemini model configured successfully.")
-            except Exception as e:
-                print(f"ERROR: Failed to configure Gemini model: {e}")
-        else:
-             print("WARNING: GOOGLE_API_KEY is not set. The chatbot will not work.")
+        # Configure the Gemini model
+        if not settings.GOOGLE_API_KEY or settings.GOOGLE_API_KEY == "YOUR_GOOGLE_API_KEY_NOT_SET":
+            self.error_message = "GOOGLE_API_KEY is not set in the .env file."
+            print(f"ERROR: {self.error_message}")
+            return
+
+        try:
+            genai.configure(api_key=settings.GOOGLE_API_KEY)
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            print("Gemini model configured successfully.")
+            # 2. Set is_configured to True ONLY if everything succeeds
+            self.is_configured = True
+        except Exception as e:
+            self.error_message = f"Failed to configure Gemini model. Error: {e}"
+            print(f"ERROR: {self.error_message}")
+            return
+
+    def get_error_details(self) -> str:
+        """Returns the specific error that occurred during initialization."""
+        return self.error_message or "Chatbot is not configured due to an unknown error."
 
     def get_answer(self, question: str) -> str:
-        if self.model is None or self.df is None:
-            return "Chatbot is not configured properly. Please check the data file path and ensure the GOOGLE_API_KEY is set in your .env file."
+        """Generates an answer using the configured Gemini model."""
+        if not self.is_configured:
+            return self.get_error_details()
 
         prompt = f"""
-        You are an expert medical data analyst. Your sole task is to answer questions based ONLY on the dataset provided below.
+        You are a friendly medical data assistant. Answer questions based ONLY on the dataset provided.
+        Be conversational.
 
         **Dataset:**
         ```
         {self.data_context}
         ```
 
-        **Instructions:**
-        1.  Analyze the dataset to answer the user's question.
-        2.  Do NOT use any external knowledge.
-        3.  If the answer cannot be found in the dataset, state that the information is not available in the provided data.
-        4.  Provide concise and direct answers. For calculations (e.g., average, count), perform them and state the result.
-
         **User's Question:**
         "{question}"
 
-        **Answer:**
+        **Your Conversational Answer:**
         """
 
         try:
@@ -63,6 +71,5 @@ class ChatbotService:
         except Exception as e:
             return f"An error occurred while communicating with the AI model: {e}"
 
-# Create a singleton instance that will be loaded on application startup
-# and imported by the API endpoint.
+# Create the singleton instance for the app to use
 chatbot_service = ChatbotService(data_path=settings.DATA_PATH)
