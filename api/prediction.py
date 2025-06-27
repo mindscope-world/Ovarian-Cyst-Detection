@@ -59,7 +59,24 @@ def preprocess_input(data: OvarianCystData) -> pd.DataFrame:
     "/predict",
     response_model=PredictionResponse,
     summary="Predict Ovarian Cyst Management",
-    description="Predicts the recommended management for an ovarian cyst based on patient data."
+    description="""
+Get a recommended management plan for a single patient based on their clinical features.
+
+Predicts the recommended management for an ovarian cyst based on patient data.
+
+The endpoint requires a JSON object with the following fields:
+
+| Field | Data Type | Description / Valid Values |
+| :--- | :--- | :--- |
+| `Age` | `integer` | The patient's age in years. |
+| `Menopause_Status`| `string` | **Must be one of:**<br>`"Pre-menopausal"` or `"Post-menopausal"` |
+| `Cyst_Size_cm` | `float` | The size of the cyst in centimeters. |
+| `Cyst_Growth_Rate_cm_month` | `float` | The rate of cyst growth per month. |
+| `CA_125_Level` | `integer` | The CA 125 cancer antigen level. |
+| `Ultrasound_Features` | `string` | **Must be one of:**<br>`"Simple cyst"`, `"Complex cyst"`, `"Septated cyst"`, `"Hemorrhagic cyst"`, `"Solid mass"` |
+| `Reported_Symptoms` | `string` | A comma-separated string of symptoms. Can be `""`.<br>_Example: `"Pelvic pain, Nausea"`_ |
+
+    """
 )
 async def predict_management(data: OvarianCystData):
     if model is None:
