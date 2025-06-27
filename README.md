@@ -1,5 +1,3 @@
----
-
 # Ovarian Cyst Analysis API
 
 This project provides a powerful API for analyzing ovarian cyst data, built with Python and FastAPI. It offers two primary functionalities:
