@@ -21,7 +21,20 @@ SAMPLE_QUESTIONS = [
     "/chatbot",
     response_model=ChatResponse,
     summary="Chat with the Ovarian Cyst Dataset",
-    description="Ask questions in natural language about the patient dataset."
+    description="""
+    > Chat with the ovarian cyst dataset using natural language.
+
+    Ask questions in natural language about the patient dataset.
+    
+    **Sample Questions:**
+        * How many patients are from the Nairobi region?,
+        * What is the average age of post-menopausal patients?,
+        * What is the recommended management for patient OC-1020?,
+        * List all patients with a cyst size greater than 9.5 cm.,
+        * Which patient has the highest CA 125 level, and what is the value?,
+        * What are the most common symptoms reported by pre-menopausal patients?,
+    """
+
 )
 async def ask_chatbot(request: ChatRequest):
     """
