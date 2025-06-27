@@ -1,3 +1,9 @@
+Of course. Here is the updated `README.md` file with a new "Deployment" section that includes detailed, step-by-step instructions for deploying the application to Render.
+
+This new section is placed right after the "Getting Started" guide, which is a logical place for it.
+
+---
+
 # Ovarian Cyst Analysis API
 
 This project provides a powerful API for analyzing ovarian cyst data, built with Python and FastAPI. It offers two primary functionalities:
@@ -30,31 +36,27 @@ The project is organized into distinct modules for clear separation of concerns.
 /
 ├── .env                  # Environment variables (API keys, settings)
 ├── main.py               # Main application entrypoint
-├── ovarian_cyst_inference_artifacts.joblib # The trained ML model
+├── build.sh              # Deployment build script for Render
 ├── requirements.txt      # Project dependencies
+├── ovarian_cyst_inference_artifacts.joblib # The trained ML model
 |
 ├── data/
 │   └── Ovarian_Cyst_Track_Data.csv  # The dataset for the chatbot
 |
 ├── api/                  # API endpoint definitions (routers)
-│   ├── __init__.py
-│   ├── prediction.py
-│   └── chatbot.py
+│   ├── ...
 |
 ├── services/             # Business logic (e.g., calling Gemini)
-│   ├── __init__.py
-│   └── chatbot_service.py
+│   ├── ...
 |
 ├── core/                 # Application configuration
-│   ├── __init__.py
-│   └── config.py
+│   ├── ...
 |
 └── models/               # Pydantic data models (schemas)
-    ├── __init__.py
-    └── schemas.py
+    ├── ...
 ```
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local Development)
 
 Follow these instructions to get the project up and running on your local machine.
 
@@ -105,50 +107,68 @@ Once the installation and configuration are complete, start the FastAPI server u
 uvicorn main:app --reload
 ```
 
-The `--reload` flag enables hot-reloading, so the server will restart automatically when you make code changes.
-
-You can now access the API:
+The `--reload` flag enables hot-reloading for development. You can now access the API locally:
 - **Interactive Docs (Swagger UI)**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **Alternative Docs (ReDoc)**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
+## ☁️ Deployment (to Render)
+
+This application is ready to be deployed for free on [Render](https://render.com/).
+
+### 1. Prepare for Deployment
+
+Before deploying, ensure you have the following files in your repository root:
+
+1.  **`requirements.txt`**: This file lists all necessary Python packages. If it's missing or outdated, generate it with:
+    ```bash
+    pip freeze > requirements.txt
+    ```
+2.  **`build.sh`**: A build script for Render. Create this file and add the following:
+    ```sh
+    #!/usr/bin/env bash
+    # exit on error
+    set -o errexit
+
+    pip install -r requirements.txt
+    ```
+3.  Commit and push all your latest changes, including these two files, to your GitHub repository.
+
+### 2. Deploy on Render
+
+1.  **Sign up** on [Render](https://render.com/) using your GitHub account.
+2.  On the dashboard, click **New +** > **Web Service**.
+3.  **Connect your repository** and select the correct project repo.
+4.  **Configure the service** with the following settings:
+    - **Name:** A unique name (e.g., `ovarian-cyst-api`).
+    - **Region:** Choose a location near you.
+    - **Build Command:** `./build.sh`
+    - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+    - **Instance Type:** Select the **Free** plan.
+5.  **Add Environment Variables:**
+    - Scroll down and expand the **Advanced** section.
+    - Click **Add Environment Variable**.
+    - **Key:** `GOOGLE_API_KEY`, **Value:** `YOUR_ACTUAL_API_KEY_HERE`
+    - (Optional) **Key:** `PYTHON_VERSION`, **Value:** `3.12` (or your Python version)
+6.  Click **Create Web Service**. Render will automatically build and deploy your application. Once complete, your API will be live at the URL provided on your dashboard.
+
 ## 📖 API Usage
 
-You can use the interactive `/docs` page to test the endpoints or use a tool like `curl` or Postman.
+You can use the interactive `/docs` page on your live URL to test the endpoints or use a tool like `curl` or Postman.
 
 ### 1. AI Chatbot Endpoint
 
-Ask a question about the ovarian cyst dataset.
-
 - **Endpoint:** `POST /chatbot`
-- **Request Body:**
-  ```json
-  {
-    "question": "How many patients from Eldoret are recommended for surgery?"
-  }
-  ```
 - **Example `curl` command:**
   ```bash
   curl -X 'POST' \
-    'http://127.0.0.1:8000/chatbot' \
+    'https://your-app-name.onrender.com/chatbot' \
     -H 'Content-Type: application/json' \
     -d '{
     "question": "How many patients from Eldoret are recommended for surgery?"
   }'
   ```
-- **Success Response:**
-  ```json
-  {
-    "answer": "Certainly! According to the dataset, there are 2 patients from the Eldoret region who are recommended for surgery.",
-    "sample_questions": [
-        "How many patients are from the Nairobi region?",
-        ...
-    ]
-  }
-  ```
 
 ### 2. ML Prediction Endpoint
-
-Get a recommended management plan for a single patient.
 
 - **Endpoint:** `POST /predict`
 - **Request Body:**
@@ -163,29 +183,18 @@ Get a recommended management plan for a single patient.
     "Reported_Symptoms": "Pelvic pain, Irregular periods, Bloating"
   }
   ```
-- **Success Response:**
-  ```json
-  {
-    "recommended_management": "Referral"
-  }
-  ```
 
 ## 🚑 Troubleshooting
 
-If you encounter issues, check these common problems first.
+- **Problem:** `FATAL ERROR: ... InconsistentVersionWarning`
+  - **Cause:** The `.joblib` model file was created with a different `scikit-learn` version.
+  - **Solution (Recommended):** Re-run the model training script to generate a new, compatible `.joblib` file and push it to your repository.
+  - **Solution (Quick Fix):** Downgrade your scikit-learn version in `requirements.txt` to match the version the model was saved with (e.g., `scikit-learn==1.6.1`).
 
-- **Problem:** `FATAL ERROR: Failed to load prediction model artifacts... InconsistentVersionWarning`
-  - **Cause:** The `ovarian_cyst_inference_artifacts.joblib` file was created with a different version of `scikit-learn` than the one in your environment.
-  - **Solution (Recommended):** Re-run the Jupyter Notebook or Python script that was used to train the model. This will generate a new, compatible `.joblib` file.
-  - **Solution (Quick Fix):** Downgrade your scikit-learn version to match the one the model was saved with (e.g., `pip install scikit-learn==1.6.1`).
-
-- **Problem:** The chatbot returns an error about not being configured.
-  - **Cause:** The application cannot find the data file or the API key.
+- **Problem:** Chatbot returns configuration errors.
   - **Solution:**
-    1. Ensure you have a directory named `data` in the project root.
-    2. Ensure the dataset `Ovarian_Cyst_Track_Data.csv` is inside the `data` directory.
-    3. Double-check that your `.env` file exists and contains a valid `GOOGLE_API_KEY`.
+    1. Ensure the `data/Ovarian_Cyst_Track_Data.csv` file exists in your repository.
+    2. Ensure the `GOOGLE_API_KEY` environment variable is set correctly on Render.
 
-- **Problem:** `ModuleNotFoundError` when starting the server.
-  - **Cause:** Python cannot find the custom modules (`api`, `models`, etc.).
-  - **Solution:** Ensure that every custom directory (`api`, `core`, `models`, `services`) contains an empty `__init__.py` file. This tells Python to treat them as importable packages.
+- **Problem:** `ModuleNotFoundError` during deployment.
+  - **Solution:** Ensure that every custom directory (`api`, `core`, `models`, `services`) contains an empty `__init__.py` file.
