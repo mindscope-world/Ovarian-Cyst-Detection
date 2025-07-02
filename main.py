@@ -8,31 +8,32 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-# Import the routers from the api module
-from api import prediction, chatbot
-
+# ✅ Create FastAPI app instance
 app = FastAPI(
     title="Ovarian Cyst Analysis API",
     description="An API for predicting ovarian cyst management and chatting with patient data using Gemini.",
     version="2.0.0"
 )
 
-# ✅ Add CORS middleware
+# ✅ Apply CORS middleware BEFORE importing routers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",             # React dev server (local)
-        "https://afya-sasa.vercel.app",      # Deployed frontend
+        "http://localhost:3000",            # local React dev
+        "https://afya-sasa.vercel.app",     # deployed frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Optional: Serve favicon to avoid 404 error
+# ✅ Import routers AFTER CORS middleware is applied
+from api import prediction, chatbot
+
+# ✅ Optional: Serve favicon.ico to avoid 404 errors
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse("static/favicon.ico")  # Ensure this file exists
+    return FileResponse("static/favicon.ico")  # Ensure file exists at static/favicon.ico
 
 # --- Startup Event ---
 @app.on_event("startup")
